@@ -94,15 +94,25 @@ const mutation = new GraphQLObjectType({
       args: {
         id: { type: GraphQLNonNull(GraphQLID) },
       },
-      resolve(parent, args) {
-        Project.find({ clientId: args.id}),then(
-          (projects) => {
-            projects.forEach(project => {
-              project.remove();
-            });
+      async resolve(parent, args) {
+        try {
+          // Find all projects related to the client
+          const projects = await Project.find({ clientId: args.id });
+
+          // Remove each project
+          for (const project of projects) {
+            await Project.findByIdAndDelete(project._id); // Alternative to .remove()
           }
-        );
-        return Client.findByIdAndDelete(args.id);
+
+          // Now delete the client
+          const client = await Client.findByIdAndDelete(args.id);
+          if (!client) {
+            throw new Error("Client not found");
+          }
+          return client;
+        } catch (error) {
+          throw new Error("Error deleting client or associated projects");
+        }
       },
     },
     updateClient: {
@@ -112,19 +122,18 @@ const mutation = new GraphQLObjectType({
         name: { type: GraphQLString },
         email: { type: GraphQLString },
         phone: { type: GraphQLString },
-        
       },
       resolve(parent, args) {
         return Project.findByIdAndUpdate(
-          args.id, 
+          args.id,
           {
             $set: {
               name: args.name,
               email: args.email,
               phone: args.phone,
-            }, 
+            },
           },
-          {new: true}
+          { new: true }
         );
       },
     },
@@ -182,15 +191,15 @@ const mutation = new GraphQLObjectType({
       },
       resolve(parent, args) {
         return Project.findByIdAndUpdate(
-          args.id, 
+          args.id,
           {
             $set: {
               name: args.name,
               description: args.description,
               status: args.status,
-            }, 
+            },
           },
-          {new: true}
+          { new: true }
         );
       },
     },
