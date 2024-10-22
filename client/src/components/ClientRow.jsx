@@ -3,6 +3,8 @@ import { useMutation } from '@apollo/client';
 import { DELETE_CLIENT } from '../mutation/clientMutations';
 import { UPDATE_CLIENT } from '../mutation/clientMutations';
 import { GET_CLIENTS } from '../queries/clientQuires';
+import { GET_PROJECTS } from '../queries/projectQuires';
+import { query } from 'express';
 
 
 export default function ClientRow({ client }) {
@@ -19,14 +21,14 @@ export default function ClientRow({ client }) {
   });
   const [updateClient] = useMutation(UPDATE_CLIENT, {
     variables: { id: client.id },
-    // refetchQueries: [{query: GET_CLIENTS}]
-    update(cache, {data: {updateClient}}) {
-      const {clients} = cache.readQuery({query: GET_CLIENTS});
-      cache.writeQuery({
-        query: GET_CLIENTS,
-        data: { clients: clients.filter(client => client.id !== updateClient.id)}
-      });
-    }
+    refetchQueries: [{query: GET_CLIENTS}, {query: GET_PROJECTS}],
+    // update(cache, {data: {updateClient}}) {
+    //   const {clients} = cache.readQuery({query: GET_CLIENTS});
+    //   cache.writeQuery({
+    //     query: GET_CLIENTS,
+    //     data: { clients: clients.filter(client => client.id !== updateClient.id)}
+    //   });
+    // }
   });
 
   return (
